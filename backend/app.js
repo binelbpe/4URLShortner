@@ -2,8 +2,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const logger = require('./utils/logger');
-const errorHandler = require('./middleware/error.middleware');
+const errorHandler = require('./middleware/errorMiddleware');
 const userRoutes = require('./routes/userRoutes');
 
 
