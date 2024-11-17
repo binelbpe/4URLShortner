@@ -1,9 +1,7 @@
-const logger = require('../utils/logger');
 const { AppError } = require('../utils/errors');
 
 const errorHandler = (err, req, res, next) => {
-    // Log error details
-    logger.error({
+    console.error({
         error: {
             message: err.message,
             stack: err.stack,
@@ -16,7 +14,6 @@ const errorHandler = (err, req, res, next) => {
         }
     });
 
-    // Handle known errors
     if (err instanceof AppError) {
         return res.status(err.statusCode).json({
             status: err.status,
@@ -25,7 +22,6 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
-    // Handle mongoose validation errors
     if (err.name === 'ValidationError') {
         const errors = Object.values(err.errors).map(error => ({
             field: error.path,
@@ -39,7 +35,6 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
-    // Handle mongoose duplicate key errors
     if (err.name === 'MongoServerError' && err.code === 11000) {
         const field = Object.keys(err.keyPattern)[0];
         return res.status(400).json({
@@ -49,7 +44,6 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
-    // Handle JWT errors
     if (err.name === 'JsonWebTokenError') {
         return res.status(401).json({
             status: 'fail',
@@ -64,7 +58,6 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
-    // Handle unknown errors
     const statusCode = err.statusCode || 500;
     res.status(statusCode).json({
         status: 'error',
@@ -74,4 +67,4 @@ const errorHandler = (err, req, res, next) => {
     });
 };
 
-module.exports = errorHandler; 
+module.exports = errorHandler;

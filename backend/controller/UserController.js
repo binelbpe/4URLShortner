@@ -1,6 +1,5 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const config = require('config');
 const User = require('../models/User');
 
 // Register Controller
@@ -40,13 +39,13 @@ exports.login = async (req, res, next) => {
 
         const accessToken = jwt.sign(
             { userId: user.id },
-            config.get('jwtSecret'),
+            process.env.JWT_SECRET,
             { expiresIn: '15m' }
         );
 
         const refreshToken = jwt.sign(
             { userId: user.id },
-            config.get('refreshSecret'),
+            process.env.REFRESH_SECRET,
             { expiresIn: '7d' }
         );
 
@@ -73,17 +72,17 @@ exports.refreshToken = async (req, res, next) => {
             return res.status(401).json({ message: 'Invalid refresh token' });
         }
 
-        const decoded = jwt.verify(refreshToken, config.get('refreshSecret'));
+        const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);  
 
         const accessToken = jwt.sign(
             { userId: decoded.userId },
-            config.get('jwtSecret'),
+            process.env.JWT_SECRET,
             { expiresIn: '15m' }
         );
 
         const newRefreshToken = jwt.sign(
             { userId: decoded.userId },
-            config.get('refreshSecret'),
+            process.env.REFRESH_SECRET,  
             { expiresIn: '7d' }
         );
 
