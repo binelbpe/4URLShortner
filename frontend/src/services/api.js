@@ -1,6 +1,6 @@
 import axios from "axios";
 import { store } from "../store/store";
-import { setTokens } from "../store/slice/authSlice";
+import { setTokens, resetAuth } from "../store/slice/authSlice";
 
 const api = axios.create({
     baseURL: process.env.REACT_APP_API_URL,
@@ -38,23 +38,22 @@ api.interceptors.response.use(
                 const refreshToken = state.auth.refreshToken;
 
                 if (!refreshToken) {
+                    store.dispatch(resetAuth());
                     throw new Error('No refresh token available');
                 }
 
                 const response = await axios.post(
-                    `${process.env.REACT_APP_API_URL}/api/auth/refresh-token`,
+                    `${process.env.REACT_APP_API_URL}/auth/refresh-token`,
                     { refreshToken }
                 );
 
                 const { accessToken, refreshToken: newRefreshToken } = response.data;
 
-                store.dispatch(
-                    setTokens({ 
-                        accessToken, 
-                        refreshToken: newRefreshToken,
-                        isAuthenticated: true 
-                    })
-                );
+                store.dispatch(setTokens({ 
+                    accessToken, 
+                    refreshToken: newRefreshToken,
+                    isAuthenticated: true 
+                }));
 
                 localStorage.setItem('tokens', JSON.stringify({
                     accessToken,
@@ -64,12 +63,8 @@ api.interceptors.response.use(
                 originalRequest.headers.Authorization = `Bearer ${accessToken}`;
                 return api(originalRequest);
             } catch (refreshError) {
+                store.dispatch(resetAuth());
                 localStorage.removeItem('tokens');
-                store.dispatch(setTokens({ 
-                    accessToken: null, 
-                    refreshToken: null,
-                    isAuthenticated: false 
-                }));
                 return Promise.reject(refreshError);
             }
         }

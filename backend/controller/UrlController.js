@@ -43,8 +43,9 @@ exports.deleteUrl = async (req, res, next) => {
             return res.status(404).json({ message: 'URL not found' });
         }
 
-        await url.remove();
-        res.json({ message: 'URL deleted' });
+        await Url.findOneAndDelete({ _id: url._id });
+        
+        res.json({ message: 'URL deleted successfully' });
     } catch (error) {
         next(error);
     }

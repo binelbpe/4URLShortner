@@ -18,8 +18,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use('/api/auth', userRoutes);
-app.use('/api/url', urlRoutes);
+app.use('/auth', userRoutes);
+app.use('/url', urlRoutes);
 app.use('/', urlCodeRoutes);
 
 // 404 handler

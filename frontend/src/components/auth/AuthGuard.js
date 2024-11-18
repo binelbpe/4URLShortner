@@ -1,30 +1,32 @@
 import React, { useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 import { checkAuth } from '../../store/slice/authSlice';
 import LoadingSpinner from '../LoadingSpinner';
 
 const AuthGuard = ({ children }) => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const { isAuthenticated, loading } = useSelector(state => state.auth);
+  const { isAuthenticated, loading, accessToken } = useSelector(state => state.auth);
 
   useEffect(() => {
-    const verifyAuth = async () => {
-      const result = await dispatch(checkAuth()).unwrap();
-      if (!result) {
-        navigate('/auth');
-      }
-    };
-
-    verifyAuth();
-  }, [dispatch, navigate]);
+    if (!isAuthenticated && accessToken) {
+      dispatch(checkAuth());
+    }
+  }, [dispatch, isAuthenticated, accessToken]);
 
   if (loading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
-  return isAuthenticated ? children : null;
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  return children;
 };
 
 export default AuthGuard; 
