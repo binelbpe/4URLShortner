@@ -39,13 +39,18 @@ api.interceptors.response.use(
 
                 if (!refreshToken) {
                     store.dispatch(resetAuth());
-                    throw new Error('No refresh token available');
+                    localStorage.removeItem('tokens');
+                    return Promise.reject(new Error('No refresh token available'));
                 }
+
+                console.log('Attempting to refresh token...');
 
                 const response = await axios.post(
                     `${process.env.REACT_APP_API_URL}/auth/refresh-token`,
                     { refreshToken }
                 );
+
+                console.log('Refresh token response:', response.data);
 
                 const { accessToken, refreshToken: newRefreshToken } = response.data;
 
@@ -63,6 +68,7 @@ api.interceptors.response.use(
                 originalRequest.headers.Authorization = `Bearer ${accessToken}`;
                 return api(originalRequest);
             } catch (refreshError) {
+                console.error('Token refresh failed:', refreshError);
                 store.dispatch(resetAuth());
                 localStorage.removeItem('tokens');
                 return Promise.reject(refreshError);

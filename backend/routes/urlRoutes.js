@@ -15,4 +15,7 @@ router.get('/', auth, urlController.getUserUrls);
 // Delete URL
 router.delete('/:id', auth, urlController.deleteUrl);
 
+// Add this new route
+router.get('/recent', auth, urlController.getRecentUrls);
+
 module.exports = router;

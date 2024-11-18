@@ -50,3 +50,20 @@ exports.deleteUrl = async (req, res, next) => {
         next(error);
     }
 };
+
+// Add this new method to get recent URLs
+exports.getRecentUrls = async (req, res, next) => {
+    try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const urls = await Url.find({ 
+            owner: req.user.userId,
+            createdAt: { $gte: today }
+        }).sort({ createdAt: -1 });
+
+        res.json(urls);
+    } catch (error) {
+        next(error);
+    }
+};

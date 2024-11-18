@@ -67,30 +67,46 @@ exports.refreshToken = async (req, res, next) => {
             return res.status(400).json({ message: 'Refresh token not provided' });
         }
 
+        console.log('Received refresh token:', refreshToken); // Debug log
+
         const user = await User.findOne({ refreshToken });
         if (!user) {
+            console.log('No user found with refresh token'); // Debug log
             return res.status(401).json({ message: 'Invalid refresh token' });
         }
 
-        const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);  
+        try {
+            const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
+            console.log('Refresh token decoded:', decoded); // Debug log
 
-        const accessToken = jwt.sign(
-            { userId: decoded.userId },
-            process.env.JWT_SECRET,
-            { expiresIn: '15m' }
-        );
+            const accessToken = jwt.sign(
+                { userId: decoded.userId },
+                process.env.JWT_SECRET,
+                { expiresIn: '15m' }
+            );
 
-        const newRefreshToken = jwt.sign(
-            { userId: decoded.userId },
-            process.env.REFRESH_SECRET,  
-            { expiresIn: '7d' }
-        );
+            const newRefreshToken = jwt.sign(
+                { userId: decoded.userId },
+                process.env.REFRESH_SECRET,
+                { expiresIn: '7d' }
+            );
 
-        user.refreshToken = newRefreshToken;
-        await user.save();
+            user.refreshToken = newRefreshToken;
+            await user.save();
 
-        res.json({ accessToken, refreshToken: newRefreshToken });
+            console.log('New tokens generated successfully'); // Debug log
+
+            res.json({ 
+                accessToken, 
+                refreshToken: newRefreshToken,
+                userId: user._id 
+            });
+        } catch (jwtError) {
+            console.error('JWT verification failed:', jwtError); // Debug log
+            return res.status(401).json({ message: 'Invalid refresh token' });
+        }
     } catch (error) {
+        console.error('Refresh token error:', error); // Debug log
         next(error);
     }
 };
