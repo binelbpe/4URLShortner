@@ -14,7 +14,6 @@ const UrlsPage = () => {
   const dispatch = useDispatch();
   const { error: serverError } = useSelector((state) => state.url);
 
-  // Fetch recent URLs
   useEffect(() => {
     const fetchRecentUrls = async () => {
       try {

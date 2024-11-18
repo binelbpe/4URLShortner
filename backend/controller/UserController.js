@@ -67,17 +67,13 @@ exports.refreshToken = async (req, res, next) => {
             return res.status(400).json({ message: 'Refresh token not provided' });
         }
 
-        console.log('Received refresh token:', refreshToken); // Debug log
-
         const user = await User.findOne({ refreshToken });
         if (!user) {
-            console.log('No user found with refresh token'); // Debug log
             return res.status(401).json({ message: 'Invalid refresh token' });
         }
 
         try {
             const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
-            console.log('Refresh token decoded:', decoded); // Debug log
 
             const accessToken = jwt.sign(
                 { userId: decoded.userId },
@@ -94,19 +90,15 @@ exports.refreshToken = async (req, res, next) => {
             user.refreshToken = newRefreshToken;
             await user.save();
 
-            console.log('New tokens generated successfully'); // Debug log
-
             res.json({ 
                 accessToken, 
                 refreshToken: newRefreshToken,
                 userId: user._id 
             });
         } catch (jwtError) {
-            console.error('JWT verification failed:', jwtError); // Debug log
             return res.status(401).json({ message: 'Invalid refresh token' });
         }
     } catch (error) {
-        console.error('Refresh token error:', error); // Debug log
         next(error);
     }
 };
@@ -123,6 +115,64 @@ exports.logout = async (req, res, next) => {
         }
 
         res.json({ message: 'Logged out successfully' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Profile Methods
+exports.getProfile = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user.userId).select('-password -refreshToken');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.json(user);
+    } catch (error) {
+        next(error);
+    }
+};
+//update profile
+exports.updateProfile = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const { currentPassword, newPassword, email } = req.body;
+  
+        if (newPassword) {
+            const isMatch = await bcrypt.compare(currentPassword, user.password);
+            if (!isMatch) {
+                return res.status(400).json({ message: 'Current password is incorrect' });
+            }
+            user.password = await bcrypt.hash(newPassword, 12);
+        }
+
+        if (email && email !== user.email) {
+            const existingUser = await User.findOne({ email });
+            if (existingUser) {
+                return res.status(400).json({ message: 'Email already in use' });
+            }
+            user.email = email;
+        }
+
+        await user.save();
+        res.json({ message: 'Profile updated successfully', email: user.email });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Verify user (for auth check)
+exports.verifyUser = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user.userId).select('-password -refreshToken');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.json(user);
     } catch (error) {
         next(error);
     }

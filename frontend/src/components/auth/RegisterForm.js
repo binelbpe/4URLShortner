@@ -14,14 +14,13 @@ const RegisterForm = ({ onToggleForm }) => {
   const dispatch = useDispatch();
   const { loading, error: serverError } = useSelector(state => state.auth);
 
-  // Update local error when server error changes
+
   useEffect(() => {
     if (serverError) {
       setLocalError(serverError);
     }
   }, [serverError]);
 
-  // Clear errors on unmount
   useEffect(() => {
     return () => {
       dispatch(clearError());
@@ -66,18 +65,15 @@ const RegisterForm = ({ onToggleForm }) => {
           email: formData.email, 
           password: formData.password 
         })).unwrap();
-        
-        // Show success message
+     
         setSuccessMessage('Registration successful! Redirecting to login...');
-        
-        // Clear form
+  
         setFormData({
           email: '',
           password: '',
           confirmPassword: ''
         });
-
-        // Redirect to login after a short delay
+   
         setTimeout(() => {
           onToggleForm();
         }, 2000);
@@ -94,8 +90,7 @@ const RegisterForm = ({ onToggleForm }) => {
       ...prev,
       [name]: value
     }));
-    
-    // Clear field error and local error when user starts typing
+ 
     if (formErrors[name]) {
       setFormErrors(prev => ({
         ...prev,

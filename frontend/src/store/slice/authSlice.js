@@ -67,7 +67,6 @@ export const updateProfile = createAsyncThunk(
   }
 );
 
-// Check auth status
 export const checkAuth = createAsyncThunk(
   "auth/checkAuth",
   async (_, { rejectWithValue, getState }) => {
@@ -80,8 +79,10 @@ export const checkAuth = createAsyncThunk(
       const response = await api.get("/auth/verify");
       return response.data;
     } catch (error) {
-      localStorage.removeItem('tokens');
-      return rejectWithValue(error.message || 'Authentication failed');
+      if (error.response?.status === 401) {
+        localStorage.removeItem('tokens');
+      }
+      return rejectWithValue(error.response?.data?.message || 'Authentication failed');
     }
   }
 );
@@ -182,21 +183,13 @@ const authSlice = createSlice({
       })
       .addCase(checkAuth.fulfilled, (state, action) => {
         state.loading = false;
-        if (action.payload) {
-          state.user = action.payload;
-          state.isAuthenticated = true;
-        } else {
-          state.isAuthenticated = false;
-          state.accessToken = null;
-          state.refreshToken = null;
-          state.user = null;
-        }
+        state.user = action.payload;
+        state.isAuthenticated = true;
+        state.error = null;
       })
       .addCase(checkAuth.rejected, (state, action) => {
         state.loading = false;
         state.isAuthenticated = false;
-        state.accessToken = null;
-        state.refreshToken = null;
         state.user = null;
         state.error = action.payload;
       });

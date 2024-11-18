@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateProfile, clearError, clearSuccessMessage } from '../../store/slice/authSlice';
+import { updateProfile, clearError, clearSuccessMessage, checkAuth } from '../../store/slice/authSlice';
 import LoadingSpinner from '../LoadingSpinner';
 
 const ProfilePage = () => {
@@ -14,15 +14,18 @@ const ProfilePage = () => {
   const dispatch = useDispatch();
   const { user, loading, error: serverError, successMessage } = useSelector(state => state.auth);
 
-  // Clear messages when component unmounts
   useEffect(() => {
+    if (!user) {
+      dispatch(checkAuth());
+    }
+ 
     return () => {
       dispatch(clearError());
       dispatch(clearSuccessMessage());
     };
-  }, [dispatch]);
+  }, [dispatch, user]);
 
-  // Update local error when server error changes
+
   useEffect(() => {
     if (serverError) {
       setLocalError(serverError);
@@ -64,7 +67,6 @@ const ProfilePage = () => {
         
         await dispatch(updateProfile(dataToUpdate)).unwrap();
         
-        // Only clear form if update was successful
         setFormData({
           currentPassword: '',
           newPassword: '',
@@ -84,7 +86,6 @@ const ProfilePage = () => {
       [name]: value
     }));
     
-    // Clear field error and local error when user starts typing
     if (formErrors[name]) {
       setFormErrors(prev => ({
         ...prev,
@@ -94,18 +95,24 @@ const ProfilePage = () => {
     setLocalError(null);
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-md mx-auto mt-10 bg-white p-8 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Profile Settings</h2>
-
-      {/* Show success message if exists */}
+   
       {successMessage && (
         <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded relative">
           {successMessage}
         </div>
       )}
 
-      {/* Show error message if exists */}
       {localError && (
         <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded relative">
           {localError}

@@ -9,14 +9,12 @@ exports.redirectUrl = async (req, res, next) => {
         if (!url) {
             return res.status(404).json({ message: 'URL not found' });
         }
-
-        // Get user agent details
+ 
         const userAgentString = req.headers['user-agent'];
         const userAgent = useragent.parse(userAgentString);
         const ua = userAgentString.toLowerCase();
         const secChUa = req.headers['sec-ch-ua'] || '';
-        
-        // Browser detection
+  
         let browser = 'Other';
         if (secChUa.includes('Brave')) {
             browser = 'Brave';
@@ -30,13 +28,11 @@ exports.redirectUrl = async (req, res, next) => {
             browser = 'Safari';
         }
 
-        // Get IP address
         let ip = req.headers['x-forwarded-for'] || 
                 req.headers['x-real-ip'] ||
                 req.ip || 
                 req.connection.remoteAddress;
 
-        // Clean up IP address
         if (ip) {
             ip = ip.split(',')[0].trim();
             if (ip.includes('::ffff:')) {
@@ -44,7 +40,6 @@ exports.redirectUrl = async (req, res, next) => {
             }
         }
 
-        // Detailed OS detection
         let os = 'Unknown';
         if (ua.includes('windows')) {
             if (ua.includes('windows nt 10.0')) {
@@ -114,7 +109,6 @@ exports.redirectUrl = async (req, res, next) => {
             }
         }
 
-        // Create click details
         const clickDetail = {
             timestamp: new Date(),
             userAgent: userAgentString,
@@ -124,8 +118,7 @@ exports.redirectUrl = async (req, res, next) => {
             browser: browser,
             os: os
         };
-
-        // Update URL with new click details
+       
         url.clicks += 1;
         url.clickDetails.push(clickDetail);
         await url.save();
