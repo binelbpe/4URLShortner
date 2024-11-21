@@ -48,36 +48,42 @@ exports.login = async (req, res, next) => {
     user.refreshToken = refreshToken;
     await user.save();
 
-    res.json({ accessToken, refreshToken, userId: user.id });
+    const userData = {
+      _id: user._id,
+      email: user.email
+    };
+
+    res.json({ 
+      accessToken, 
+      refreshToken, 
+      userId: user.id,
+      user: userData 
+    });
   } catch (error) {
     next(error);
   }
 };
 
-
 exports.refreshToken = async (req, res, next) => {
   try {
     const { refreshToken } = req.body;
 
-
     if (!refreshToken) {
-     
       return res.status(400).json({ message: "Refresh token not provided" });
     }
 
     const user = await User.findOne({ refreshToken });
     if (!user) {
-
       return res.status(401).json({ message: "Invalid refresh token" });
     }
 
     try {
       const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
-      
+
       const accessToken = jwt.sign(
         { userId: decoded.userId },
         process.env.JWT_SECRET,
-        { expiresIn: "10s" }
+        { expiresIn: "15m" }
       );
 
       const newRefreshToken = jwt.sign(
@@ -89,24 +95,20 @@ exports.refreshToken = async (req, res, next) => {
       user.refreshToken = newRefreshToken;
       await user.save();
 
-
       res.json({
         accessToken,
         refreshToken: newRefreshToken,
-        userId: user._id,
+        userId: user._id
       });
     } catch (jwtError) {
-      console.error('JWT verification failed:', jwtError);
       user.refreshToken = null;
       await user.save();
       return res.status(401).json({ message: "Invalid refresh token" });
     }
   } catch (error) {
-    console.error('Refresh token error:', error);
     next(error);
   }
 };
-
 
 exports.logout = async (req, res, next) => {
   try {
@@ -124,7 +126,6 @@ exports.logout = async (req, res, next) => {
   }
 };
 
-
 exports.getProfile = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.userId).select(
@@ -138,7 +139,6 @@ exports.getProfile = async (req, res, next) => {
     next(error);
   }
 };
-
 
 exports.updateProfile = async (req, res, next) => {
   try {
@@ -165,7 +165,6 @@ exports.updateProfile = async (req, res, next) => {
     next(error);
   }
 };
-
 
 exports.verifyUser = async (req, res, next) => {
   try {

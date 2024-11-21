@@ -9,19 +9,21 @@ const api = axios.create({
     },
 });
 
+
 api.interceptors.request.use(
     (config) => {
-        const state = store.getState();
-        const token = state.auth.accessToken;
-
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+        const tokens = localStorage.getItem('tokens');
+        if (tokens) {
+            const { accessToken } = JSON.parse(tokens);
+            if (accessToken) {
+                config.headers.Authorization = `Bearer ${accessToken}`;
+            }
         }
-
         return config;
     },
     (error) => Promise.reject(error)
 );
+
 
 api.interceptors.response.use(
     (response) => response,
@@ -32,41 +34,29 @@ api.interceptors.response.use(
             originalRequest._retry = true;
 
             try {
-                const state = store.getState();
-                const refreshToken = state.auth.refreshToken;
-
-                if (!refreshToken) {
-                    store.dispatch(resetAuth());
-                    localStorage.removeItem('tokens');
-                    return Promise.reject(new Error('No refresh token available'));
+                const tokens = localStorage.getItem('tokens');
+                if (!tokens) {
+                    throw new Error('No tokens available');
                 }
 
-                console.log('Attempting to refresh token...');
-
+                const { refreshToken } = JSON.parse(tokens);
                 const response = await axios.post(
                     `${process.env.REACT_APP_API_URL}/auth/refresh-token`,
                     { refreshToken }
                 );
 
-                console.log('Refresh token response:', response.data);
+                const newTokens = {
+                    accessToken: response.data.accessToken,
+                    refreshToken: response.data.refreshToken,
+                    userId: response.data.userId
+                };
+                
+                localStorage.setItem('tokens', JSON.stringify(newTokens));
+                store.dispatch(setTokens(newTokens));
 
-                const { accessToken, refreshToken: newRefreshToken } = response.data;
-
-                store.dispatch(setTokens({ 
-                    accessToken, 
-                    refreshToken: newRefreshToken,
-                    isAuthenticated: true 
-                }));
-
-                localStorage.setItem('tokens', JSON.stringify({
-                    accessToken,
-                    refreshToken: newRefreshToken
-                }));
-
-                originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+                originalRequest.headers.Authorization = `Bearer ${newTokens.accessToken}`;
                 return api(originalRequest);
             } catch (refreshError) {
-                console.error('Token refresh failed:', refreshError);
                 store.dispatch(resetAuth());
                 localStorage.removeItem('tokens');
                 return Promise.reject(refreshError);

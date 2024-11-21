@@ -79,20 +79,47 @@ export const getProfile = createAsyncThunk(
 
 export const checkAuth = createAsyncThunk(
   "auth/checkAuth",
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, dispatch }) => {
     try {
       const tokens = localStorage.getItem('tokens');
       if (!tokens) {
-        return rejectWithValue('No tokens found');
+        throw new Error('No tokens found');
       }
 
-      const response = await api.get("/auth/profile");
-      return response.data;
-    } catch (error) {
-      if (error.response?.status === 401) {
+      const { accessToken, refreshToken } = JSON.parse(tokens);
+      if (!accessToken || !refreshToken) {
         localStorage.removeItem('tokens');
+        throw new Error('Invalid tokens');
       }
-      throw error;
+
+      try {
+        const response = await api.get("/auth/profile/get");
+        return { ...response.data, accessToken, refreshToken };
+      } catch (error) {
+        if (error.response?.status === 401) {
+          try {
+            const refreshResponse = await api.post("/auth/refresh-token", { refreshToken });
+            const newTokens = {
+              accessToken: refreshResponse.data.accessToken,
+              refreshToken: refreshResponse.data.refreshToken,
+              userId: refreshResponse.data.userId
+            };
+
+            localStorage.setItem('tokens', JSON.stringify(newTokens));
+            
+            // Get user profile with new token
+            const profileResponse = await api.get("/auth/profile/get");
+            return { ...profileResponse.data, ...newTokens };
+          } catch (refreshError) {
+            localStorage.removeItem('tokens');
+            throw refreshError;
+          }
+        }
+        throw error;
+      }
+    } catch (error) {
+      localStorage.removeItem('tokens');
+      return rejectWithValue(error.message || 'Authentication failed');
     }
   }
 );
@@ -151,6 +178,7 @@ const authSlice = createSlice({
         state.accessToken = action.payload.accessToken;
         state.refreshToken = action.payload.refreshToken;
         state.userId = action.payload.userId;
+        state.user = action.payload.user;
         state.error = null;
       })
       .addCase(login.rejected, (state, action) => {
@@ -198,7 +226,10 @@ const authSlice = createSlice({
         state.loading = false;
         state.isAuthenticated = false;
         state.user = null;
+        state.accessToken = null;
+        state.refreshToken = null;
         state.error = action.payload;
+        localStorage.removeItem('tokens');
       });
   },
 });
