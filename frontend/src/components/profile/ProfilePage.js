@@ -25,12 +25,12 @@ const ProfilePage = () => {
     };
   }, [dispatch, user]);
 
-
   useEffect(() => {
     if (serverError) {
       setLocalError(serverError);
+      dispatch(clearError());
     }
-  }, [serverError]);
+  }, [serverError, dispatch]);
 
   const validateForm = () => {
     const errors = {};
@@ -73,7 +73,7 @@ const ProfilePage = () => {
           confirmNewPassword: ''
         });
       } catch (err) {
-        setLocalError(err.message || 'Failed to update profile');
+        setLocalError(err);
       }
     }
   };
@@ -106,15 +106,15 @@ const ProfilePage = () => {
     <div className="max-w-md mx-auto mt-10 bg-white p-8 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Profile Settings</h2>
    
-      {successMessage && (
-        <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded relative">
-          {successMessage}
+      {localError && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          {localError}
         </div>
       )}
 
-      {localError && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded relative">
-          {localError}
+      {successMessage && (
+        <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+          {successMessage}
         </div>
       )}
 

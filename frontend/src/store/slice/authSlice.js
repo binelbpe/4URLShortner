@@ -60,7 +60,9 @@ export const updateProfile = createAsyncThunk(
       const response = await api.put("/auth/profile/update", data);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to update profile');
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to update profile'
+      );
     }
   }
 );
@@ -191,14 +193,17 @@ const authSlice = createSlice({
       .addCase(updateProfile.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.successMessage = null;
       })
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.loading = false;
         state.successMessage = action.payload.message;
+        state.error = null;
       })
       .addCase(updateProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        state.successMessage = null;
       })
       .addCase(getProfile.pending, (state) => {
         state.loading = true;
