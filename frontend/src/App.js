@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Route,
@@ -10,76 +10,70 @@ import { checkAuth } from "./store/slice/authSlice";
 import Navbar from "./components/Navbar";
 import AuthPage from "./pages/AuthPage";
 import UrlsPage from "./pages/UrlsPage";
+import UrlListPage from "./components/urls/UrlListPage";
 import ProfilePage from "./components/profile/ProfilePage";
-import UrlList from "./components/urls/UrlList";
-import HomePage from "./pages/HomePage";
-import "./App.css";
-import AuthGuard from "./components/auth/AuthGuard";
 import LoadingSpinner from "./components/LoadingSpinner";
 
-function App() {
+const App = () => {
   const dispatch = useDispatch();
   const { isAuthenticated, loading } = useSelector((state) => state.auth);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   useEffect(() => {
-    dispatch(checkAuth());
+    const checkAuthentication = async () => {
+      try {
+        if (localStorage.getItem('tokens')) {
+          await dispatch(checkAuth()).unwrap();
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+      } finally {
+        setInitialCheckDone(true);
+      }
+    };
+
+    checkAuthentication();
   }, [dispatch]);
 
-  if (loading) {
-    return <LoadingSpinner />;
+  if (!initialCheckDone) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   return (
     <Router>
-      <div className="App bg-gray-50 min-h-screen">
+      <div className="min-h-screen bg-gray-100">
         <Navbar />
         <div className="container mx-auto px-4 py-8">
           <Routes>
             <Route
-              path="/"
-              element={
-                !isAuthenticated ? (
-                  <Navigate to="/auth" replace />
-                ) : (
-                  <HomePage />
-                )
-              }
-            />
-            <Route
               path="/auth"
-              element={
-                isAuthenticated ? <Navigate to="/" replace /> : <AuthPage />
-              }
+              element={isAuthenticated ? <Navigate to="/urls" /> : <AuthPage />}
             />
             <Route
               path="/urls"
-              element={
-                <AuthGuard>
-                  <UrlsPage />
-                </AuthGuard>
-              }
+              element={isAuthenticated ? <UrlsPage /> : <Navigate to="/auth" />}
             />
             <Route
               path="/url-list"
-              element={
-                <AuthGuard>
-                  <UrlList />
-                </AuthGuard>
-              }
+              element={isAuthenticated ? <UrlListPage /> : <Navigate to="/auth" />}
             />
             <Route
               path="/profile"
-              element={
-                <AuthGuard>
-                  <ProfilePage />
-                </AuthGuard>
-              }
+              element={isAuthenticated ? <ProfilePage /> : <Navigate to="/auth" />}
+            />
+            <Route
+              path="/"
+              element={<Navigate to={isAuthenticated ? "/urls" : "/auth"} />}
             />
           </Routes>
         </div>
       </div>
     </Router>
   );
-}
+};
 
 export default App;

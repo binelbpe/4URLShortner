@@ -39,7 +39,6 @@ const UrlListPage = () => {
     try {
       await dispatch(createShortUrl({ originalUrl: url })).unwrap();
       setUrl('');
-      // Refresh the list after creating new URL
       dispatch(fetchUrls());
     } catch (err) {
       setLocalError(err);

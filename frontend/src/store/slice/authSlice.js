@@ -69,11 +69,11 @@ export const updateProfile = createAsyncThunk(
 
 export const checkAuth = createAsyncThunk(
   "auth/checkAuth",
-  async (_, { rejectWithValue, getState }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const { auth } = getState();
-      if (!auth.accessToken) {
-        return rejectWithValue('No access token');
+      const tokens = localStorage.getItem('tokens');
+      if (!tokens) {
+        return rejectWithValue('No tokens found');
       }
 
       const response = await api.get("/auth/verify");
@@ -82,20 +82,19 @@ export const checkAuth = createAsyncThunk(
       if (error.response?.status === 401) {
         localStorage.removeItem('tokens');
       }
-      return rejectWithValue(error.response?.data?.message || 'Authentication failed');
+      throw error;
     }
   }
 );
 
 const initialState = {
-  userId: null,
-  accessToken: null,
-  refreshToken: null,
+  user: null,
   isAuthenticated: false,
+  accessToken: localStorage.getItem('tokens') ? JSON.parse(localStorage.getItem('tokens')).accessToken : null,
+  refreshToken: localStorage.getItem('tokens') ? JSON.parse(localStorage.getItem('tokens')).refreshToken : null,
   loading: false,
   error: null,
-  user: null,
-  successMessage: null,
+  successMessage: null
 };
 
 const authSlice = createSlice({
