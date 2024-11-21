@@ -11,10 +11,8 @@ router.post('/register', validate(registerValidation), authController.register);
 router.post('/login', validate(loginValidation), authController.login);
 router.post('/refresh-token', authController.refreshToken);
 router.post('/logout', authController.logout);
-router.get('/verify', auth, authController.verifyUser);
 
-// Profile Routes
+// Profile/Verification Route
 router.get('/profile', auth, authController.getProfile);
-router.put('/profile', auth, authController.updateProfile);
 
 module.exports = router;

@@ -76,7 +76,7 @@ export const checkAuth = createAsyncThunk(
         return rejectWithValue('No tokens found');
       }
 
-      const response = await api.get("/auth/verify");
+      const response = await api.get("/auth/profile");
       return response.data;
     } catch (error) {
       if (error.response?.status === 401) {
