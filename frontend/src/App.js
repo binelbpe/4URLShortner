@@ -16,7 +16,7 @@ import LoadingSpinner from "./components/LoadingSpinner";
 
 const App = () => {
   const dispatch = useDispatch();
-  const { isAuthenticated, loading } = useSelector((state) => state.auth);
+  const { isAuthenticated } = useSelector((state) => state.auth);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   useEffect(() => {

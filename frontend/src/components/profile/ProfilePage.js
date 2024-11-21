@@ -73,8 +73,7 @@ const ProfilePage = () => {
           confirmNewPassword: ''
         });
       } catch (err) {
-        setLocalError(err);
-        console.error('Failed to update profile:', err);
+        setLocalError(err.message || 'Failed to update profile');
       }
     }
   };

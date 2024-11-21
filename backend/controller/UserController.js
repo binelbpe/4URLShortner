@@ -120,23 +120,20 @@ exports.logout = async (req, res, next) => {
     }
 };
 
-// Profile Methods
+// Get Profile
 exports.getProfile = async (req, res, next) => {
     try {
         const user = await User.findById(req.user.userId).select('-password -refreshToken');
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        res.json({
-            id: user._id,
-            email: user.email,
-            isAuthenticated: true
-        });
+        res.json(user);
     } catch (error) {
         next(error);
     }
 };
-//update profile
+
+// Update Profile
 exports.updateProfile = async (req, res, next) => {
     try {
         const user = await User.findById(req.user.userId);
@@ -144,8 +141,8 @@ exports.updateProfile = async (req, res, next) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        const { currentPassword, newPassword, email } = req.body;
-  
+        const { currentPassword, newPassword } = req.body;
+
         if (newPassword) {
             const isMatch = await bcrypt.compare(currentPassword, user.password);
             if (!isMatch) {
@@ -154,16 +151,8 @@ exports.updateProfile = async (req, res, next) => {
             user.password = await bcrypt.hash(newPassword, 12);
         }
 
-        if (email && email !== user.email) {
-            const existingUser = await User.findOne({ email });
-            if (existingUser) {
-                return res.status(400).json({ message: 'Email already in use' });
-            }
-            user.email = email;
-        }
-
         await user.save();
-        res.json({ message: 'Profile updated successfully', email: user.email });
+        res.json({ message: 'Profile updated successfully' });
     } catch (error) {
         next(error);
     }

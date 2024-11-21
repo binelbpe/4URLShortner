@@ -55,14 +55,24 @@ export const logout = createAsyncThunk(
 
 export const updateProfile = createAsyncThunk(
   "auth/updateProfile",
-  async (userData, { rejectWithValue }) => {
+  async (data, { rejectWithValue }) => {
     try {
-      const response = await api.put("/auth/profile", userData);
+      const response = await api.put("/auth/profile/update", data);
       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to update profile"
-      );
+      return rejectWithValue(error.response?.data?.message || 'Failed to update profile');
+    }
+  }
+);
+
+export const getProfile = createAsyncThunk(
+  "auth/getProfile",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get("/auth/profile/get");
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to get profile');
     }
   }
 );
@@ -123,10 +133,9 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(register.fulfilled, (state, action) => {
+      .addCase(register.fulfilled, (state) => {
         state.loading = false;
-        state.error = null;
-        state.message = "Registration successful! Please login to continue.";
+        state.successMessage = "Registration successful! Please login.";
       })
       .addCase(register.rejected, (state, action) => {
         state.loading = false;
@@ -139,42 +148,41 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
         state.isAuthenticated = true;
-        state.userId = action.payload.userId;
         state.accessToken = action.payload.accessToken;
         state.refreshToken = action.payload.refreshToken;
+        state.userId = action.payload.userId;
         state.error = null;
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
-        state.error =
-          typeof action.payload === "string"
-            ? action.payload
-            : "An error occurred during login";
+        state.error = action.payload;
       })
       .addCase(logout.fulfilled, (state) => {
-        state.userId = null;
-        state.accessToken = null;
-        state.refreshToken = null;
-        state.isAuthenticated = false;
-        state.user = null;
-        state.error = null;
+        return initialState;
       })
       .addCase(updateProfile.pending, (state) => {
         state.loading = true;
         state.error = null;
-        state.successMessage = null;
       })
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.loading = false;
-        state.successMessage = action.payload.message || 'Profile updated successfully';
-        if (action.payload.email) {
-          state.user = { ...state.user, email: action.payload.email };
-        }
+        state.successMessage = action.payload.message;
       })
       .addCase(updateProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        state.successMessage = null;
+      })
+      .addCase(getProfile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getProfile.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+      })
+      .addCase(getProfile.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       })
       .addCase(checkAuth.pending, (state) => {
         state.loading = true;

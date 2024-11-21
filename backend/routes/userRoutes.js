@@ -12,7 +12,8 @@ router.post('/login', validate(loginValidation), authController.login);
 router.post('/refresh-token', authController.refreshToken);
 router.post('/logout', authController.logout);
 
-// Profile/Verification Route
-router.get('/profile', auth, authController.getProfile);
+// Profile Routes
+router.get('/profile/get', auth, authController.getProfile);
+router.put('/profile/update', auth, authController.updateProfile);
 
 module.exports = router;
